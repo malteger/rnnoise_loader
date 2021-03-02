@@ -19,7 +19,7 @@ while getopts ":humspl:c:" opt; do
       echo -e "  -u \tUnload modules from pulseaudio instead of (re)loading"
       echo -e "  -m \tDisable load/unload microphone suppression for default sink"
       echo -e "  -s \tLoad/Unload speaker suppression for default sink"
-      echo -e "  -c \tSet RNNoise control to value (default: 95)"
+      echo -e "  -c \tSet RNNoise control, in percent (default: 95)"
       echo -e "  -p \tOnly print pulseaudio commands, do not execute them (pipe mode)"
       echo -e "  -l \tProvide path to librnnoise_ladspa.so (by default the standard ladspa lib path will be used)"
       echo -e "  -h \tShow this help and exit"
@@ -43,13 +43,18 @@ while getopts ":humspl:c:" opt; do
       DEST="cat"
       ;;
     c )
+      re=
+      if ! [[ $OPTARG =~ ^[0-9]+$ ]] ; then
+        echo "Invalid argument: -${opt} requires an integer" >&2
+        exit 1
+      fi
       CONTROL="$OPTARG"
       ;;
     l )
       LADSPA_LIB="$OPTARG"
       ;;
     \? )
-      echo "Invalid option: $OPTARG" 1>&2
+      echo "Invalid option: $OPTARG" >&2
       exit 1
       ;;
     : )
