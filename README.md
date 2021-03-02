@@ -1,20 +1,20 @@
-# RNNoise based voice suppression loader for Pulseaudio
+# Real-time Noise Suppression Loader for Pulseaudio
 
 Helper script to easily load or unload the
-[voice suppression plugin by werman](https://github.com/werman/noise-suppression-for-voice/),
-written in bash.
+[Real-time Noise Suppression Plugin](https://github.com/werman/noise-suppression-for-voice/)
+by [@werman](https://github.com/werman), written in bash.
 
 ## Usage
 
 Needs the
-[voice suppression plugin by werman](https://github.com/werman/noise-suppression-for-voice/),
+[Real-time Noise Suppression Plugin](https://github.com/werman/noise-suppression-for-voice/),
 see `rnnoise_loader -h` for more information. If you are using ArchLinux,
-see [here](https://aur.archlinux.org/packages/noise-suppression-for-voice/)
+have a look at [this AUR package](https://aur.archlinux.org/packages/noise-suppression-for-voice/)
 
 Basic usage is `rnnoise_loader` to load the plugin for your default source and
-`rnnoise_loader -u` to unload it. Supports also sink mode.
+`rnnoise_loader -u` to unload it. Noise reduction for sinks is also supported.
 
 ## Alternatives
 
 - [NoiseTorch](https://github.com/lawl/NoiseTorch): If you need a GUI or auto updater
-- Use the plugin directly
+- Directly load the plugin in `default.pa` (will consume CPU even if not used)
