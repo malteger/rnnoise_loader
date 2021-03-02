@@ -1,0 +1,134 @@
+#!/bin/bash
+
+UNLOAD=0
+MIC=1
+SPEAKER=0
+CONTROL=95
+DEST="pacmd"
+
+LADSPA_LIB=/usr/lib/ladspa/librnnoise_ladspa.so
+SOURCE="$(pactl info | grep 'Default Source' | tr -d ' ' | cut -d ':' -f2)"
+
+while getopts ":humspl:c:" opt; do
+  case ${opt} in
+    h )
+      echo "Usage: $0 [-u] [-m] [-s] [-p] [-c value]"
+      echo "Loading/Unloading of microphone suppression is enabled by default"
+      echo ""
+      echo "Options:"
+      echo -e "  -u \tUnload modules from pulseaudio instead of (re)loading"
+      echo -e "  -m \tDisable load/unload microphone suppression for default sink"
+      echo -e "  -s \tLoad/Unload speaker suppression for default sink"
+      echo -e "  -c \tSet RNNoise control to value (default: 95)"
+      echo -e "  -p \tOnly print pulseaudio commands, do not execute them (pipe mode)"
+      echo -e "  -l \tProvide path to librnnoise_ladspa.so (defaults to ${LADSPA_LIB})"
+      echo -e "  -h \tShow this help and exit"
+      echo ""
+      echo "Notes:"
+      echo "The source for the microphone noise suppression is set to the default source"
+      echo "when this script is running. The sink for the speaker is set to '@DEFAULT_SINK@'."
+      echo "Current default source: ${SOURCE}"
+      exit 0
+      ;;
+    u )
+      UNLOAD=1
+      ;;
+    m )
+      MIC=0
+      ;;
+    s )
+      SPEAKER=1
+      ;;
+    p )
+      DEST="cat"
+      ;;
+    c )
+      CONTROL="$OPTARG"
+      ;;
+    l )
+      LADSPA_LIB="$OPTARG"
+      ;;
+    \? )
+      echo "Invalid option: $OPTARG" 1>&2
+      exit 1
+      ;;
+    : )
+      echo "Argument required for -${OPTARG}"
+      exit 1
+      ;;
+  esac
+done
+
+if [ ! -f "$LADSPA_LIB" ]
+then
+  echo "Ladspa library not found at ${LADSPA_LIB}" 1>&2
+  exit 2
+fi
+
+unload (){
+  module="$1"
+  options="$2"
+  module_id=$(pactl list modules short | grep -e "${module}.${options}" | cut -f1)
+  if [ -n "$module_id" ]
+    then
+      echo "unload-module ${module_id}" | $DEST
+  fi
+}
+
+unload_mic (){
+  unload 'module-remap-source' 'source_name=rnnoise_denoised'
+  unload 'module-loopback' 'sink=rnnoise_mic_raw_in'
+  unload 'module-ladspa-sink' 'sink_name=rnnoise_mic_raw_in'
+  unload 'module-null-sink' 'sink_name=rnnoise_mic_denoised_out'
+}
+
+unload_speaker (){
+  unload 'module-loopback' 'source=rnnoise_out_in_sink.monitor'
+  unload 'module-loopback' 'source=rnnoise_out_out_sink.monitor'
+  unload 'module-ladspa-sink' 'sink_name=rnnoise_out_ladspa'
+  unload 'module-null-sink' 'sink_name=rnnoise_out_in_sink'
+  unload 'module-null-sink' 'sink_name=rnnoise_out_out_sink'
+}
+
+if [ $UNLOAD -eq 0 ]
+then
+  # Loading modules
+  if [ $MIC -eq 1 ]
+  then
+    unload_mic
+    if [ "$DEST" == "pacmd" ]
+    then
+      echo "Loading RNNoise for source ${SOURCE}"
+    fi
+    $DEST << MODULES
+load-module module-null-sink sink_name=rnnoise_mic_denoised_out rate=48000
+load-module module-ladspa-sink sink_name=rnnoise_mic_raw_in sink_master=rnnoise_mic_denoised_out label=noise_suppressor_mono plugin=${LADSPA_LIB} control=${CONTROL}
+load-module module-loopback sink=rnnoise_mic_raw_in source=${SOURCE} channels=1 latency_msec=1 source_dont_move=true sink_dont_move=true
+load-module module-remap-source source_name=rnnoise_denoised master=rnnoise_mic_denoised_out.monitor source_properties="device.description='RNNoise Microphone'" channels=1
+MODULES
+  fi
+
+  if [ $SPEAKER -eq 1 ]
+  then
+    unload_speaker
+    $DEST << MODULES
+load-module module-null-sink sink_name=rnnoise_out_out_sink
+load-module module-null-sink sink_name=rnnoise_out_in_sink sink_properties="device.description='RNNoise Speaker'"
+load-module module-ladspa-sink sink_name=rnnoise_out_ladspa sink_master=rnnoise_out_out_sink label=noise_suppressor_mono channels=1 plugin=${LADSPA_LIB} control=${CONTROL} rate=48000
+load-module module-loopback source=rnnoise_out_out_sink.monitor sink=@DEFAULT_SINK@ channels=2 latency_msec=50 source_dont_move=true sink_dont_move=true
+load-module module-loopback source=rnnoise_out_in_sink.monitor sink=rnnoise_out_ladspa channels=1 latency_msec=50 source_dont_move=true sink_dont_move=true
+MODULES
+  fi
+
+else
+  # Unloading modules
+  if [ $MIC -eq 1 ]
+  then
+    unload_mic
+  fi
+
+  if [ $SPEAKER -eq 1 ]
+  then
+    unload_speaker
+  fi
+fi
