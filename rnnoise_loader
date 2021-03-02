@@ -12,7 +12,7 @@ SOURCE="$(pactl info | grep 'Default Source' | tr -d ' ' | cut -d ':' -f2)"
 while getopts ":humspl:c:" opt; do
   case ${opt} in
     h )
-      echo "Usage: $0 [-u] [-m] [-s] [-p] [-c value]"
+      echo "Usage: $(basename "$0") [-u] [-m] [-s] [-p] [-c value]"
       echo "Loading/Unloading of microphone suppression is enabled by default"
       echo ""
       echo "Options:"
