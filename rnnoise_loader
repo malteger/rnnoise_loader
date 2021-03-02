@@ -43,7 +43,6 @@ while getopts ":humspl:c:" opt; do
       DEST="cat"
       ;;
     c )
-      re=
       if ! [[ $OPTARG =~ ^[0-9]+$ ]] ; then
         echo "Invalid argument: -${opt} requires an integer" >&2
         exit 1
