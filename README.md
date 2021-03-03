@@ -1,8 +1,8 @@
-# Real-time Noise Suppression Loader for Pulseaudio
+# Real-time Noise Suppression Loader for PulseAudio
 
 Helper script to easily load or unload the
 [Real-time Noise Suppression Plugin](https://github.com/werman/noise-suppression-for-voice/)
-by [@werman](https://github.com/werman), written in bash.
+by [@werman](https://github.com/werman) for PulseAudio, written in bash.
 
 ## Usage
 
@@ -17,4 +17,4 @@ Basic usage is `rnnoise_loader` to load the plugin for your default source and
 ## Alternatives
 
 - [NoiseTorch](https://github.com/lawl/NoiseTorch): If you need a GUI or auto updater
-- Directly load the plugin in `default.pa` (will consume CPU even if not used)
+- Directly load the plugin in `default.pa` (note that the plugin uses the CPU even if not used)

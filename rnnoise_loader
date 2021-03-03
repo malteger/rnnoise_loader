@@ -9,18 +9,18 @@ DEST="pacmd"
 LADSPA_LIB=librnnoise_ladspa.so
 SOURCE="$(pactl info | grep 'Default Source' | tr -d ' ' | cut -d ':' -f2)"
 
-while getopts ":humspl:c:" opt; do
+while getopts ':humspl:c:' opt; do
   case ${opt} in
     h )
       echo "Usage: $(basename "$0") [-u] [-m] [-s] [-p] [-c value]"
       echo "Loading/Unloading of microphone suppression is enabled by default"
       echo ""
       echo "Options:"
-      echo -e "  -u \tUnload modules from pulseaudio instead of (re)loading"
+      echo -e "  -u \tUnload modules from PulseAudio instead of (re)loading"
       echo -e "  -m \tDisable load/unload microphone suppression for default sink"
       echo -e "  -s \tLoad/Unload speaker suppression for default sink"
       echo -e "  -c \tSet RNNoise control, in percent (default: 95)"
-      echo -e "  -p \tOnly print pulseaudio commands, do not execute them (pipe mode)"
+      echo -e "  -p \tOnly print PulseAudio commands, do not execute them (pipe mode)"
       echo -e "  -l \tProvide path to librnnoise_ladspa.so (by default the standard ladspa lib path will be used)"
       echo -e "  -h \tShow this help and exit"
       echo ""
