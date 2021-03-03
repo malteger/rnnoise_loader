@@ -129,6 +129,10 @@ MODULES
   if [ $SPEAKER -eq 1 ]
   then
     unload_speaker
+    if [ "$DEST" == "pacmd" ]
+    then
+      echo "Loading RNNoise for sink @DEFAULT_SINK@"
+    fi
     $DEST << MODULES
 load-module module-null-sink sink_name=rnnoise_out_out_sink
 load-module module-null-sink sink_name=rnnoise_out_in_sink sink_properties="device.description='RNNoise Speaker'"
