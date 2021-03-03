@@ -17,7 +17,7 @@ while getopts ':humspfl:c:' opt; do
       echo ""
       echo "Options:"
       echo -e "  -u \tUnload modules from PulseAudio instead of (re)loading"
-      echo -e "  -m \tDisable load/unload microphone suppression for default sink"
+      echo -e "  -m \tDisable load/unload microphone suppression for default source"
       echo -e "  -s \tLoad/Unload speaker suppression for default sink"
       echo -e "  -c \tSet RNNoise control, in percent (default: 95)"
       echo -e "  -p \tOnly print PulseAudio commands, do not execute them (pipe mode)"
