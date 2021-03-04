@@ -71,13 +71,17 @@ while getopts ':humspfil:c:' opt; do
   esac
 done
 
-if [ -n "$SHOW_STATUS" ]
-then
-  ACTIVE_SOURCE=$(pactl list modules short | grep -o 'module-loopback.sink=rnnoise_mic_raw_in source=[^[:blank:]]\+' | cut -d '=' -f 3)
-  [ -n "$ACTIVE_SOURCE" ] && echo "Loaded for input ${ACTIVE_SOURCE}"
-  pactl list modules short | grep -q 'module-ladspa-sink.sink_name=rnnoise_out_ladspa' && echo "Loaded for default output"
-  exit 0
-fi
+get_active_mic (){
+  pactl list modules short | grep -o 'module-loopback.sink=rnnoise_mic_raw_in source=[^[:blank:]]\+' | cut -d '=' -f 3
+}
+
+is_mic_active (){
+  [ -n "$(get_active_mic)" ]
+}
+
+is_speaker_active (){
+  pactl list modules short | grep -q 'module-ladspa-sink.sink_name=rnnoise_out_ladspa'
+}
 
 unload (){
   module="$1"
@@ -103,6 +107,13 @@ unload_speaker (){
   unload 'module-null-sink' 'sink_name=rnnoise_out_in_sink'
   unload 'module-null-sink' 'sink_name=rnnoise_out_out_sink'
 }
+
+if [ -n "$SHOW_STATUS" ]
+then
+  is_mic_active && echo "Loaded for input $(get_active_mic)"
+  is_speaker_active && echo "Loaded for default output"
+  exit 0
+fi
 
 if [ $UNLOAD -eq 0 ]
 then
