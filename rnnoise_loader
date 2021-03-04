@@ -9,7 +9,7 @@ DEST="pacmd"
 LADSPA_LIB=librnnoise_ladspa.so
 SOURCE="$(pactl info | grep 'Default Source' | tr -d ' ' | cut -d ':' -f2)"
 
-while getopts ':humspfil:c:' opt; do
+while getopts ':humspfil:c:t' opt; do
   case ${opt} in
     h )
       echo "Usage: $(basename "$0") [-u] [-m] [-s] [-p] [-c value]"
@@ -19,6 +19,7 @@ while getopts ':humspfil:c:' opt; do
       echo -e "  -u \tUnload modules from PulseAudio instead of (re)loading"
       echo -e "  -m \tDisable load/unload microphone suppression for default source"
       echo -e "  -s \tLoad/Unload speaker suppression for default sink"
+      echo -e "  -t \tToggle on/off, based on mic status if both are activated"
       echo -e "  -c \tSet RNNoise control, in percent (default: 95)"
       echo -e "  -p \tOnly print PulseAudio commands, do not execute them (pipe mode)"
       echo -e "  -l \tProvide path to librnnoise_ladspa.so (by default the standard ladspa lib path will be used)"
@@ -40,6 +41,9 @@ while getopts ':humspfil:c:' opt; do
       ;;
     s )
       SPEAKER=1
+      ;;
+    t )
+      TOGGLE=1
       ;;
     p )
       DEST="cat"
@@ -107,6 +111,20 @@ unload_speaker (){
   unload 'module-null-sink' 'sink_name=rnnoise_out_in_sink'
   unload 'module-null-sink' 'sink_name=rnnoise_out_out_sink'
 }
+
+if [ -n "$TOGGLE" ]
+then
+  if [ $MIC -eq 1 ]
+  then
+    is_mic_active && UNLOAD=1 || UNLOAD=0
+  elif [ $SPEAKER -eq 1 ]
+  then
+    is_speaker_active && UNLOAD=1 || UNLOAD=0
+  else
+    echo "At least one output must be specified!" >&2
+    exit 4
+  fi
+fi
 
 if [ -n "$SHOW_STATUS" ]
 then
