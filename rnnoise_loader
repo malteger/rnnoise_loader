@@ -160,6 +160,12 @@ fi
 
 if [ $UNLOAD -eq 0 ]
 then
+  # Always force loading if ladspa helpers are not available
+  if [ -z $FORCE_LADSPA ] && ! command -v listplugins &> /dev/null && ! command -v analyseplugin &> /dev/null
+  then
+    FORCE_LADSPA=1
+    echo "Disabling LADSPA checking as analyser is not available" >&2
+  fi
   # Load modules, check if ladspa plugin is valid first. If it is valid unload
   # the plugins before loading to make sure only a single RNNoise instance per
   # sink/source is present.
